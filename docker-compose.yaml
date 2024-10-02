@@ -1,19 +1,9 @@
-x-logging: &default-logging
-  driver: loki
-  options:
-    loki-url: 'http://localhost:3100/api/prom/push'
-    loki-pipeline-stages: |
-      - multiline:
-          firstline: '^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}'
-          max_wait_time: 3s
-      - regex:
-          expression: '^(?P<time>\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2},d{3}) (?P<message>(?s:.*))$$'
-
 version: "3.4"
 
 services:
   loki:
-    image: grafana/loki:3.0.0
+    image: grafana/loki:latest
+    container_name: loki
     command: -config.file=/etc/loki/local-config.yaml
     ports:
       - "3100:3100"
@@ -21,38 +11,75 @@ services:
   app-a:
     # build: ./fastapi_app/
     image: ghcr.io/blueswen/fastapi-observability/app:latest
+    container_name: app-a
     ports:
       - "8003:8000"
     depends_on:
+      - otel-collector
       - loki
     environment:
       APP_NAME: "app-a"
-    logging: *default-logging
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-pipeline-stages: |
+          - multiline:
+              firstline: '^\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}'
+              max_wait_time: 3s
+          - regex:
+              expression: '^(?P<time>\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2},d{3}) (?P<message>(?s:.*))$$'
 
   app-b:
     # build: ./fastapi_app/
     image: ghcr.io/blueswen/fastapi-observability/app:latest
+    container_name: app-b
     ports:
       - "8001:8000"
     depends_on:
+      - otel-collector
       - loki
     environment:
       APP_NAME: "app-b"
-    logging: *default-logging
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-pipeline-stages: |
+          - multiline:
+              firstline: '^\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}'
+              max_wait_time: 3s
+          - regex:
+              expression: '^(?P<time>\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2},d{3}) (?P<message>(?s:.*))$$'
 
   app-c:
     # build: ./fastapi_app/
     image: ghcr.io/blueswen/fastapi-observability/app:latest
+    container_name: app-c
     ports:
       - "8002:8000"
     depends_on:
+      - otel-collector
       - loki
     environment:
       APP_NAME: "app-c"
-    logging: *default-logging
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-pipeline-stages: |
+          - multiline:
+              firstline: '^\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}'
+              max_wait_time: 3s
+          - regex:
+              expression: '^(?P<time>\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2},d{3}) (?P<message>(?s:.*))$$'
 
   prometheus:
-    image: prom/prometheus:v2.51.2
+    image: prom/prometheus:latest
+    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -61,28 +88,83 @@ services:
       - --config.file=/workspace/prometheus.yml
       - --enable-feature=exemplar-storage
     depends_on:
+      - otel-collector
       - loki
-    logging: *default-logging
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-pipeline-stages: |
+          - multiline:
+              firstline: '^\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}'
+              max_wait_time: 3s
+          - regex:
+              expression: '^(?P<time>\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2},d{3}) (?P<message>(?s:.*))$$'
 
   tempo:
-    image: grafana/tempo:2.4.1
-    command: [ "--target=all", "--storage.trace.backend=local", "--storage.trace.local.path=/var/tempo", "--auth.enabled=false" ]
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./etc/tempo/:/etc
+    ports:
+      - "14268"
+      - "3200"
+      - "9411"
+    depends_on:
+      - init
+
+  init:
+    image: grafana/tempo:latest
+    user: root
+    entrypoint:
+      - "chown"
+      - "10001:10001"
+      - "/var/tempo"
+    volumes:
+      - ./tempo-data:/var/tempo
+
+  k6-tracing:
+    image: ghcr.io/grafana/xk6-client-tracing:latest
+    container_name: k6-tracing
+    environment:
+      - ENDPOINT=otel-collector:4317
+    restart: always
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./etc/otel/:/etc/otel-collector-config.yaml
     ports:
       - "4317:4317"
       - "4318:4318"
     depends_on:
       - loki
-    logging: *default-logging
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-pipeline-stages: |
+          - multiline:
+              firstline: '^\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}'
+              max_wait_time: 3s
+          - regex:
+              expression: '^(?P<time>\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2},d{3}) (?P<message>(?s:.*))$$'
 
   grafana:
-    image: grafana/grafana:10.4.2
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - ./etc/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
     ports:
       - "3000:3000"
-    volumes:
-      - ./etc/grafana/:/etc/grafana/provisioning/datasources
-      - ./etc/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
-      - ./etc/dashboards:/etc/grafana/dashboards
-    depends_on:
-      - loki
-      - prometheus
-    logging: *default-logging
+
