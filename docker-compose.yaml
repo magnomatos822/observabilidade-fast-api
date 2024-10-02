@@ -133,30 +133,8 @@ services:
     depends_on:
       - otel-collector
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: otel-collector
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    volumes:
-      - ./etc/otel/:/etc/otel-collector-config.yaml
-    ports:
-      - "4317:4317"
-      - "4318:4318"
-    depends_on:
-      - loki
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
-        loki-pipeline-stages: |
-          - multiline:
-              firstline: '^\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}'
-              max_wait_time: 3s
-          - regex:
-              expression: '^(?P<time>\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{4}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2} \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{1,2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2}:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\d{2},d{3}) (?P<message>(?s:.*))$$'
-
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana-oss:11.2.2
     container_name: grafana
     volumes:
       - ./etc/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/
@@ -168,3 +146,21 @@ services:
     ports:
       - "3000:3000"
 
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    volumes:
+      - ./otel-config.yaml:/etc/otel/config.yaml
+    command: ["--config", "/etc/otel/config.yaml"]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.41
+    ports:
+      - "5775:5775"  # UDP
+      - "6831:6831"  # UDP
+      - "6832:6832"  # UDP
+      - "5778:5778"  # HTTP
+      - "16686:16686"  # UI
+      - "14268:14268"  # Thrift HTTP
+      - "14250:14250"  # Thrift
+
+  

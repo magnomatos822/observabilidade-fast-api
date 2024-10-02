@@ -3,43 +3,29 @@ receivers:
     protocols:
       grpc:
       http:
-    endpoint: 0.0.0.0:4317
+
 exporters:
+  prometheus:
+    endpoint: "0.0.0.0:9090"
+
   loki:
-    endpoint: http://localhost:3100/api/prom/push
-    pipeline_stages:
-      - multiline:
-          firstline: '^\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{2}:\\d{2}'
-          max_wait_time: 3s
-      - regex:
-          expression: '^(?P<time>\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{2}:\\d{2},d{3}) (?P<message>(?s:.*))$$'
+    endpoint: "http://loki:3100/loki/api/v1/push"
+
   tempo:
-    endpoint: http://localhost:4318
-processors:
-  batch:
-    timeout: 1s
+    endpoint: "http://tempo:3200"
+
+  jaeger:
+    endpoint: "jaeger:16686" # Endereço do Jaeger
 service:
   pipelines:
     traces:
-      receivers:
-        - otlp
-      processors:
-        - batch
-      exporters:
-        - tempo
-        - loki
+      receivers: [otlp]
+      exporters: [tempo, otlp, jaeger]
+
     metrics:
-      receivers:
-        - otlp
-      processors:
-        - batch
-      exporters:
-        - prometheus
-        - loki
+      receivers: [otlp]
+      exporters: [prometheus]
+
     logs:
-      receivers:
-        - otlp
-      processors:
-        - batch
-      exporters:
-        - loki
+      receivers: [otlp]
+      exporters: [loki]
