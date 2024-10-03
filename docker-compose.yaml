@@ -111,27 +111,15 @@ services:
       - "14268"
       - "3200"
       - "9411"
-    depends_on:
-      - init
 
-  init:
-    image: grafana/tempo:latest
-    user: root
-    entrypoint:
-      - "chown"
-      - "10001:10001"
-      - "/var/tempo"
-    volumes:
-      - ./tempo-data:/var/tempo
-
-  k6-tracing:
-    image: ghcr.io/grafana/xk6-client-tracing:latest
-    container_name: k6-tracing
-    environment:
-      - ENDPOINT=otel-collector:4317
-    restart: always
-    depends_on:
-      - otel-collector
+  # k6-tracing:
+  #   image: ghcr.io/grafana/xk6-client-tracing:latest
+  #   container_name: k6-tracing
+  #   environment:
+  #     - ENDPOINT=otel-collector:4317
+  #   restart: always
+  #   depends_on:
+  #     - otel-collector
 
   grafana:
     image: grafana/grafana-oss:11.2.2
@@ -147,20 +135,21 @@ services:
       - "3000:3000"
 
   otel-collector:
-    image: otel/opentelemetry-collector:latest
+    image: otel/opentelemetry-collector-contrib
+    container_name: otel-collector
     volumes:
-      - ./otel-config.yaml:/etc/otel/config.yaml
-    command: ["--config", "/etc/otel/config.yaml"]
+      - ./etc/otel/:/etc/otel/  # Monta o diretório, não apenas o arquivo
+    command: ["--config", "/etc/otel/config.yaml"]  # O caminho para o arquivo de configuração está correto
 
-  jaeger:
-    image: jaegertracing/all-in-one:1.41
-    ports:
-      - "5775:5775"  # UDP
-      - "6831:6831"  # UDP
-      - "6832:6832"  # UDP
-      - "5778:5778"  # HTTP
-      - "16686:16686"  # UI
-      - "14268:14268"  # Thrift HTTP
-      - "14250:14250"  # Thrift
+  # jaeger:
+  #   image: jaegertracing/all-in-one:1.41
+  #   ports:
+  #     - "5775:5775"  # UDP
+  #     - "6831:6831"  # UDP
+  #     - "6832:6832"  # UDP
+  #     - "5778:5778"  # HTTP
+  #     - "16686:16686"  # UI
+  #     - "14268:14268"  # Thrift HTTP
+  #     - "14250:14250"  # Thrift
 
   
